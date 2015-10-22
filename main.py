@@ -72,7 +72,7 @@ class WeatherHandler(webapp2.RequestHandler):
         min_temp = min([l['main']['temp_min'] for l in data['list'] if (datetime.datetime.fromtimestamp(l['dt']) - now).total_seconds() < (24 * 60 * 60)])
         
         ## Taken from https://temboo.com/processing/display-temperature
-        minTemp = 10
+        minTemp = 40
         maxTemp = 95
         max_temperature_color = min([255, max([0, int(255 * (max_temp - minTemp) / (maxTemp - minTemp))])])
         min_temperature_color = min([255, max([0, int(255 * (min_temp - minTemp) / (maxTemp - minTemp))])])
