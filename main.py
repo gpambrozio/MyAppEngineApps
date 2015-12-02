@@ -29,17 +29,30 @@ class BartHandler(webapp2.RequestHandler):
     def get(self):
         self.response.content_type = "text/plain"
         
+        station = self.request.get('s')
+        direction = self.request.get('d')
+        travel_time = 5
+        try:
+            travel_time = int(self.request.get('t', '0'))
+        except:
+            pass
+
+        if station == '':
+            who = self.request.get('w')
+            if who == 'g':
+                station = 'woak'
+                direction = 's'
+                travel_time = 11
+            else:
+                station = '16th'
+                direction = 'n'
+                travel_time = 7
+        
         http = urllib3.PoolManager()
-        uri = "http://api.bart.gov/api/etd.aspx?cmd=etd&orig=%s&dir=%s&key=MW9S-E7SL-26DU-VV8V"% (self.request.get('s'), self.request.get('d'))
+        uri = "http://api.bart.gov/api/etd.aspx?cmd=etd&orig=%s&dir=%s&key=MW9S-E7SL-26DU-VV8V"% (station, direction)
         response = http.request('GET', uri)
         root = ElementTree.fromstring(response.data)
 
-        travel_time = 5
-        try:
-            travel_time = int(self.request.get('t'))
-        except:
-            pass
-        
         min_travel_time = -1
         for estimate in root.iter('estimate'):
             try:
@@ -50,7 +63,7 @@ class BartHandler(webapp2.RequestHandler):
                 pass
 
         min_travel_time -= travel_time
-        self.response.write("%d" % min_travel_time)
+        self.response.write("%d" % max(0, min_travel_time))
             
 
 class WeatherHandler(webapp2.RequestHandler):
@@ -63,7 +76,14 @@ class WeatherHandler(webapp2.RequestHandler):
         self.response.content_type = "text/plain"
         
         http = urllib3.PoolManager()
-        uri = "http://api.openweathermap.org/data/2.5/forecast?id=%s&units=imperial&appid=bd82977b86bf27fb59a04b61b657fb6f"% (self.request.get('i'))
+        weather_id = self.request.get('i')
+        if weather_id == '':
+            who = self.request.get('w')
+            if who == 'g':
+                weather_id = 5378538
+            else:
+                weather_id = 5391959
+        uri = "http://api.openweathermap.org/data/2.5/forecast?id=%s&units=imperial&appid=bd82977b86bf27fb59a04b61b657fb6f"% (weather_id)
         response = http.request('GET', uri)
         data = json.loads(response.data)
         
@@ -73,7 +93,7 @@ class WeatherHandler(webapp2.RequestHandler):
         
         ## Taken from https://temboo.com/processing/display-temperature
         minTemp = 40
-        maxTemp = 95
+        maxTemp = 85
         max_temperature_color = min([255, max([0, int(255 * (max_temp - minTemp) / (maxTemp - minTemp))])])
         min_temperature_color = min([255, max([0, int(255 * (min_temp - minTemp) / (maxTemp - minTemp))])])
 
@@ -84,4 +104,6 @@ app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/bart', BartHandler),
     ('/weather', WeatherHandler),
+    ('/b', BartHandler),
+    ('/w', WeatherHandler),
 ], debug=True)
