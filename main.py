@@ -18,6 +18,7 @@ import webapp2
 
 import datetime
 import json
+import time
 import urllib3
 from xml.etree import ElementTree
 
@@ -100,10 +101,17 @@ class WeatherHandler(webapp2.RequestHandler):
         self.response.write("%d,%d" % (min_temperature_color << 16 | (255 - min_temperature_color), max_temperature_color << 16 | (255 - max_temperature_color)))
 
 
+class TimeHandler(webapp2.RequestHandler):
+    def get(self):
+        self.response.content_type = "text/plain"
+        self.response.write("%d" % time.time())
+
+
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/bart', BartHandler),
     ('/weather', WeatherHandler),
     ('/b', BartHandler),
     ('/w', WeatherHandler),
+    ('/t', TimeHandler),
 ], debug=True)
